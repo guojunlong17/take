@@ -13,6 +13,8 @@ import com.gjl.service.CategoryService;
 import com.gjl.service.DishService;
 import com.gjl.service.SetmealService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -28,6 +30,7 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryMapper, Category> i
     private SetmealService setmealService;
 
     @Override
+    @Cacheable(value = "categoryCache",key = "'categoryPage'")
     public R<Page> GetAll(int page,int pageSize) {
         Page<Category> pageInfo=new Page<Category>(page,pageSize);
         LambdaQueryWrapper<Category> qw=new LambdaQueryWrapper<>();
@@ -37,6 +40,7 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryMapper, Category> i
     }
 
     @Override
+    @CacheEvict(value = "categoryCache")
     public R<String> remove(Long id) {
         LambdaQueryWrapper<Dish> dqw=new LambdaQueryWrapper<>();
         dqw.eq(Dish::getCategoryId,id);
@@ -58,7 +62,6 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryMapper, Category> i
 
     @Override
     public R<List<Category>> GetTypeAll(Category category) {
-
         LambdaQueryWrapper<Category> qw=new LambdaQueryWrapper<>();
         qw.eq(category.getType()!=null,Category::getType,category.getType());
         qw.orderByDesc(Category::getSort).orderByDesc(Category::getUpdateTime);

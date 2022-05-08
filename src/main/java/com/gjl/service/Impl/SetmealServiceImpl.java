@@ -17,6 +17,8 @@ import lombok.val;
 import lombok.var;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -40,6 +42,7 @@ public class SetmealServiceImpl extends ServiceImpl<SetmealMapper,Setmeal> imple
      */
     @Override
     @Transactional
+    @CacheEvict(value = "setmealCache",allEntries = true)
     public void saveWithDish(SetmealDto setmealDto) {
         this.save(setmealDto);
         List<SetmealDish> setmealDishes = setmealDto.getSetmealDishes();
@@ -60,6 +63,7 @@ public class SetmealServiceImpl extends ServiceImpl<SetmealMapper,Setmeal> imple
      * @return
      */
     @Override
+    @Cacheable(value = "setmealCache",key = "'setmealPage'")
     public R<Page> page(int page, int pageSize, String name) {
         Page<Setmeal> pageInfo=new Page<>(page,pageSize);
         Page<SetmealDto> pageDto=new Page<>();
@@ -94,6 +98,7 @@ public class SetmealServiceImpl extends ServiceImpl<SetmealMapper,Setmeal> imple
      * @return
      */
     @Override
+    @Cacheable(value = "setmealCache",key = "#id")
     public SetmealDto getByIdWithSetmealDish(Long id) {
         Setmeal setmeal=this.getById(id);
         SetmealDto setmealDto=new SetmealDto();
@@ -113,6 +118,7 @@ public class SetmealServiceImpl extends ServiceImpl<SetmealMapper,Setmeal> imple
      */
     @Override
     @Transactional
+    @CacheEvict(value = "setmealCache")
     public void updateWithSetmealDish(SetmealDto setmealDto) {
         //先修改套餐表里的数据
         this.updateById(setmealDto);
@@ -137,6 +143,7 @@ public class SetmealServiceImpl extends ServiceImpl<SetmealMapper,Setmeal> imple
      * @param status
      */
     @Override
+    @CacheEvict(value = "setmealCache",allEntries = true)
     public void updateStatus(List<Long> ids, Integer status) {
         List<Setmeal> list=new ArrayList<>();
         for (Long id : ids) {
@@ -150,6 +157,7 @@ public class SetmealServiceImpl extends ServiceImpl<SetmealMapper,Setmeal> imple
 
     @Override
     @Transactional
+    @CacheEvict(value = "setmealCache",allEntries = true)
     public void deleteSetmeal(List<Long> ids) {
         LambdaQueryWrapper<Setmeal> queryWrapper=new LambdaQueryWrapper<>();
         queryWrapper.in(Setmeal::getId,ids);
@@ -173,6 +181,7 @@ public class SetmealServiceImpl extends ServiceImpl<SetmealMapper,Setmeal> imple
      * @return
      */
     @Override
+    @Cacheable(value ="setmealCache",key = "#setmeal.categoryId+'_'+#setmeal.status",unless = "#setmeal==null")
     public R<List<SetmealDto>> list(Setmeal setmeal) {
         LambdaQueryWrapper<Setmeal> queryWrapper=new LambdaQueryWrapper<>();
         queryWrapper.eq(Setmeal::getCategoryId,setmeal.getCategoryId());

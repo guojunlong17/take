@@ -16,6 +16,9 @@ import com.gjl.service.DishFlavorService;
 import com.gjl.service.DishService;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -33,14 +36,13 @@ public class DishServiceImpl extends ServiceImpl<DishMapper, Dish> implements Di
     @Autowired
     private CategoryService categoryService;
 
-    @Autowired
-    private RedisTemplate redisTemplate;
 
     /**
      * 新增菜品
      * @param dishDto
      */
     @Transactional
+    @CacheEvict(value = "dishCache")
     public void saveWithFlavor(DishDto dishDto) {
         this.save(dishDto);
 
@@ -53,9 +55,6 @@ public class DishServiceImpl extends ServiceImpl<DishMapper, Dish> implements Di
 
         dishFlavorService.saveBatch(flavors);
 
-        String key="dish_"+dishDto.getCategoryId()+"_1";
-        redisTemplate.delete(key);
-
     }
 
     /**
@@ -66,6 +65,7 @@ public class DishServiceImpl extends ServiceImpl<DishMapper, Dish> implements Di
      * @return
      */
     @Override
+    @Cacheable(value = "dishCache",key = "'dishPage'")
     public R<Page> getAll(int page, int pageSize, String name) {
         //创建菜品分页page
         Page<Dish> pageInfo=new Page<>(page,pageSize);
@@ -108,6 +108,7 @@ public class DishServiceImpl extends ServiceImpl<DishMapper, Dish> implements Di
      * @return
      */
     @Override
+    @Cacheable(value = "dishCache",key = "#id")
     public DishDto getByIdWithFlavor(Long id) {
         Dish dish=this.getById(id);
 
@@ -127,6 +128,7 @@ public class DishServiceImpl extends ServiceImpl<DishMapper, Dish> implements Di
      */
     @Override
     @Transactional
+    @CacheEvict(value = "dishCache")
     public void updateWithFlavor(DishDto dishDto) {
         this.updateById(dishDto);
 
@@ -142,8 +144,6 @@ public class DishServiceImpl extends ServiceImpl<DishMapper, Dish> implements Di
 
         dishFlavorService.saveBatch(flavors);
 
-        String key="dish_"+dishDto.getCategoryId()+"_1";
-        redisTemplate.delete(key);
     }
 
     /**
@@ -152,6 +152,7 @@ public class DishServiceImpl extends ServiceImpl<DishMapper, Dish> implements Di
      */
     @Override
     @Transactional
+    @CacheEvict(value = "dishCache")
     public void deleteDish(List<Long> ids) {
 
         LambdaQueryWrapper<Dish> DishQueryWrapper=new LambdaQueryWrapper<>();
@@ -177,6 +178,7 @@ public class DishServiceImpl extends ServiceImpl<DishMapper, Dish> implements Di
      * @param status
      */
     @Override
+    @CacheEvict(value = "dishCache")
     public void updateStatus(List<Long> ids, Integer status) {
         List<Dish> list=new ArrayList<Dish>();
         for (Long id : ids) {
@@ -194,15 +196,8 @@ public class DishServiceImpl extends ServiceImpl<DishMapper, Dish> implements Di
      * @return
      */
     @Override
+    @Cacheable(value = "dishCache",key ="#dish.categoryId+'_'+#dish.status",unless ="#dish==null" )
     public R<List<DishDto>> list(Dish dish) {
-        List<DishDto> dtoList=null;
-        String key="dish_"+dish.getCategoryId()+"_"+dish.getStatus();
-        dtoList=(List<DishDto>)redisTemplate.opsForValue().get(key);
-
-        if (dtoList!=null){
-            return R.success(dtoList);
-        }
-
         LambdaQueryWrapper<Dish> queryWrapper=new LambdaQueryWrapper<>();
         queryWrapper.eq(dish.getCategoryId()!=null,Dish::getCategoryId,dish.getCategoryId());
         queryWrapper.eq(Dish::getStatus,1);
@@ -210,7 +205,7 @@ public class DishServiceImpl extends ServiceImpl<DishMapper, Dish> implements Di
 
         List<Dish> list = this.list(queryWrapper);
 
-        dtoList=list.stream().map((item)->{
+        List<DishDto> dtoList=list.stream().map((item)->{
             DishDto dishDto=new DishDto();
             BeanUtils.copyProperties(item,dishDto);
 
@@ -221,7 +216,6 @@ public class DishServiceImpl extends ServiceImpl<DishMapper, Dish> implements Di
             return dishDto;
         }).collect(Collectors.toList());
 
-        redisTemplate.opsForValue().set(key,dtoList);
 
         return R.success(dtoList);
     }

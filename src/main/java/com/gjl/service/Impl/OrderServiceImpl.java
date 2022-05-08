@@ -16,6 +16,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import javax.xml.crypto.Data;
@@ -47,6 +49,7 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Orders> implement
      * @param orders
      */
     @Override
+    @CacheEvict("orderCache")
     public void submit(Orders orders) {
         Long userId= BaseContext.GetCurrentId();
 
@@ -116,6 +119,7 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Orders> implement
      * @return
      */
     @Override
+    @Cacheable(value = "orderCache",key = "'orderPage'")
     public R<Page> getAll(int page, int pageSize, Long number, String beginTime, String endTime) {
         Page<Orders> pageInfo=new Page<>(page,pageSize);
         LambdaQueryWrapper<Orders> queryWrapper=new LambdaQueryWrapper<>();
@@ -164,6 +168,7 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Orders> implement
      * @param orders
      */
     @Override
+    @CacheEvict("orderCache")
     public void updateStatus(Orders orders) {
         this.updateById(orders);
     }
@@ -174,6 +179,7 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Orders> implement
      * @return
      */
     @Override
+    @Cacheable(value = "orderCache",key = "#orders.id",unless = "#orders==null")
     public void again(Orders orders) {
         LambdaQueryWrapper<OrderDetail> queryWrapper=new LambdaQueryWrapper<>();
         queryWrapper.eq(OrderDetail::getOrderId,orders.getId());

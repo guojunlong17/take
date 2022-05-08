@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.gjl.common.R;
 import com.gjl.domain.Category;
 import com.gjl.service.CategoryService;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
@@ -17,6 +18,7 @@ public class CategoryController {
     private CategoryService service;
 
     @PostMapping
+    @CacheEvict(value = "categoryCache")
     public R<String> save(@RequestBody Category category){
         service.save(category);
         return R.success("添加成功！");
@@ -32,6 +34,7 @@ public class CategoryController {
         return service.remove(ids);
     }
 
+    @CacheEvict(value = "categoryCache")
     @PutMapping
     public R<String> update(@RequestBody Category category){
         service.updateById(category);

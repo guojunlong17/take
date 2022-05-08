@@ -9,6 +9,7 @@ import com.gjl.domain.User;
 import com.gjl.mapper.UserMapper;
 import com.gjl.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CachePut;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
