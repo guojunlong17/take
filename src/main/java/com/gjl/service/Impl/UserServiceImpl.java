@@ -8,15 +8,20 @@ import com.gjl.common.R;
 import com.gjl.domain.User;
 import com.gjl.mapper.UserMapper;
 import com.gjl.service.UserService;
-import lombok.val;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
-import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 @Service
 public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements UserService {
+
+    @Autowired
+    private RedisTemplate redisTemplate;
+
     /**
      * 发送手机短信验证码
      * @param user
@@ -31,7 +36,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
 
         SMSUtils.sendMessage(Phone,code);
 
-        session.setAttribute(Phone,code);
+        redisTemplate.opsForValue().set(Phone,code,5, TimeUnit.MINUTES);
+
     }
 
     /**
@@ -46,7 +52,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         String phone=map.get("phone").toString();
         String code=map.get("code").toString();
 
-        Object codeInSession=session.getAttribute(phone);
+        Object codeInSession=redisTemplate.opsForValue().get(phone);
 
 //        if(codeInSession!=null&&codeInSession.equals(code)){
 //            LambdaQueryWrapper<User> queryWrapper=new LambdaQueryWrapper<>();
@@ -64,6 +70,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         user.setPhone(phone);
         user.setId(1521466825656709121l);
         session.setAttribute("user",user.getId());
+        redisTemplate.delete(phone);
         return R.success(user);
     }
 }

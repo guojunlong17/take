@@ -16,6 +16,7 @@ import com.gjl.service.DishFlavorService;
 import com.gjl.service.DishService;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -31,6 +32,9 @@ public class DishServiceImpl extends ServiceImpl<DishMapper, Dish> implements Di
 
     @Autowired
     private CategoryService categoryService;
+
+    @Autowired
+    private RedisTemplate redisTemplate;
 
     /**
      * 新增菜品
@@ -48,6 +52,9 @@ public class DishServiceImpl extends ServiceImpl<DishMapper, Dish> implements Di
         }).collect(Collectors.toList());
 
         dishFlavorService.saveBatch(flavors);
+
+        String key="dish_"+dishDto.getCategoryId()+"_1";
+        redisTemplate.delete(key);
 
     }
 
@@ -134,6 +141,9 @@ public class DishServiceImpl extends ServiceImpl<DishMapper, Dish> implements Di
         }).collect(Collectors.toList());
 
         dishFlavorService.saveBatch(flavors);
+
+        String key="dish_"+dishDto.getCategoryId()+"_1";
+        redisTemplate.delete(key);
     }
 
     /**
@@ -185,6 +195,14 @@ public class DishServiceImpl extends ServiceImpl<DishMapper, Dish> implements Di
      */
     @Override
     public R<List<DishDto>> list(Dish dish) {
+        List<DishDto> dtoList=null;
+        String key="dish_"+dish.getCategoryId()+"_"+dish.getStatus();
+        dtoList=(List<DishDto>)redisTemplate.opsForValue().get(key);
+
+        if (dtoList!=null){
+            return R.success(dtoList);
+        }
+
         LambdaQueryWrapper<Dish> queryWrapper=new LambdaQueryWrapper<>();
         queryWrapper.eq(dish.getCategoryId()!=null,Dish::getCategoryId,dish.getCategoryId());
         queryWrapper.eq(Dish::getStatus,1);
@@ -192,7 +210,7 @@ public class DishServiceImpl extends ServiceImpl<DishMapper, Dish> implements Di
 
         List<Dish> list = this.list(queryWrapper);
 
-        List<DishDto> dtoList=list.stream().map((item)->{
+        dtoList=list.stream().map((item)->{
             DishDto dishDto=new DishDto();
             BeanUtils.copyProperties(item,dishDto);
 
@@ -202,6 +220,8 @@ public class DishServiceImpl extends ServiceImpl<DishMapper, Dish> implements Di
             dishDto.setFlavors(list1);
             return dishDto;
         }).collect(Collectors.toList());
+
+        redisTemplate.opsForValue().set(key,dtoList);
 
         return R.success(dtoList);
     }
