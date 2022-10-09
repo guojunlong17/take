@@ -9,14 +9,12 @@ import com.gjl.domain.Employee;
 import com.gjl.mapper.EmployeeMapper;
 import com.gjl.service.EmployeeService;
 import org.apache.logging.log4j.util.Strings;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.util.DigestUtils;
-import org.springframework.util.StringUtils;
 
-import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
-import java.time.LocalDateTime;
 
 @Service
 public class EmployeeServiceImpl extends ServiceImpl<EmployeeMapper, Employee> implements EmployeeService {
@@ -55,19 +53,17 @@ public class EmployeeServiceImpl extends ServiceImpl<EmployeeMapper, Employee> i
     }
 
     @Override
+    @CacheEvict(value = "employeeCache")
     public R<Object> saves(HttpServletRequest request,Employee employee) {
 
         employee.setPassword(DigestUtils.md5DigestAsHex("123456".getBytes()));
-//        employee.setCreateTime(LocalDateTime.now());
-//        employee.setUpdateTime(LocalDateTime.now());
-//        Long id=(Long) request.getSession().getAttribute("employee");
-//        employee.setCreateUser(id);
-//        employee.setUpdateUser(id);
+
         super.save(employee);
         return R.success("添加成功！");
     }
 
     @Override
+    @Cacheable(value = "employeeCache",key = "'employeePage'")
     public R<Page> GetAll(int page, int pageSize, String name) {
 
         Page<Employee> pageInfo=new Page<Employee>(page,pageSize);
@@ -81,11 +77,9 @@ public class EmployeeServiceImpl extends ServiceImpl<EmployeeMapper, Employee> i
     }
 
     @Override
+    @CacheEvict(value = "employeeCache")
     public R<String> Update(HttpServletRequest request, Employee employee) {
 
-//        Long id=(Long) request.getSession().getAttribute("employee");
-//        employee.setUpdateTime(LocalDateTime.now());
-//        employee.setUpdateUser(id);
         super.updateById(employee);
         return R.success("修改成功！");
     }
