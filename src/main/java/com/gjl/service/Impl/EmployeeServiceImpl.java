@@ -53,7 +53,7 @@ public class EmployeeServiceImpl extends ServiceImpl<EmployeeMapper, Employee> i
     }
 
     @Override
-    @CacheEvict(value = "employeeCache")
+    @CacheEvict(value = "employeeCache",allEntries = true)
     public R<Object> saves(HttpServletRequest request,Employee employee) {
 
         employee.setPassword(DigestUtils.md5DigestAsHex("123456".getBytes()));
@@ -63,7 +63,7 @@ public class EmployeeServiceImpl extends ServiceImpl<EmployeeMapper, Employee> i
     }
 
     @Override
-    @Cacheable(value = "employeeCache",key = "'employeePage'")
+//    @Cacheable(value = "employeeCache",key = "'employeePage'")
     public R<Page> GetAll(int page, int pageSize, String name) {
 
         Page<Employee> pageInfo=new Page<Employee>(page,pageSize);
@@ -77,7 +77,7 @@ public class EmployeeServiceImpl extends ServiceImpl<EmployeeMapper, Employee> i
     }
 
     @Override
-    @CacheEvict(value = "employeeCache")
+    @CacheEvict(value = "employeeCache",allEntries = true)
     public R<String> Update(HttpServletRequest request, Employee employee) {
 
         super.updateById(employee);
