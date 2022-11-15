@@ -178,7 +178,7 @@ public class DishServiceImpl extends ServiceImpl<DishMapper, Dish> implements Di
      * @param status
      */
     @Override
-    @CacheEvict(value = "dishCache")
+    @CacheEvict(value = "dishCache",allEntries = true)
     public void updateStatus(List<Long> ids, Integer status) {
         List<Dish> list=new ArrayList<Dish>();
         for (Long id : ids) {

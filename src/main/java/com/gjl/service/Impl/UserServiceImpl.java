@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.gjl.Utils.SMSUtils;
 import com.gjl.Utils.ValidateCodeUtils;
+import com.gjl.common.BaseContext;
 import com.gjl.common.R;
 import com.gjl.domain.User;
 import com.gjl.mapper.UserMapper;
@@ -13,6 +14,7 @@ import org.springframework.cache.annotation.CachePut;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -44,11 +46,11 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     /**
      * 移动端用户登录
      * @param map
-     * @param session
+     * @param request
      * @return
      */
     @Override
-    public R<User> login(Map map, HttpSession session) {
+    public R<User> login(Map map, HttpServletRequest request) {
 
         String phone=map.get("phone").toString();
         String code=map.get("code").toString();
@@ -70,7 +72,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         User user=new User();
         user.setPhone(phone);
         user.setId(1521466825656709121l);
-        session.setAttribute("user",user.getId());
+        request.getSession().setAttribute("user",user.getId());
         redisTemplate.delete(phone);
         return R.success(user);
     }

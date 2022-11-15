@@ -20,6 +20,7 @@ import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
+import javax.websocket.Session;
 import javax.xml.crypto.Data;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -60,7 +61,6 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Orders> implement
 
         //查询用户的信息
         User user = userService.getById(userId);
-
         //查询地址数据
         Long addressBookId = orders.getAddressBookId();
         AddressBook addressBook = addressBookService.getById(addressBookId);
@@ -143,6 +143,7 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Orders> implement
         BeanUtils.copyProperties(pageInfo,dtoPage,"records");
 
         LambdaQueryWrapper<Orders> queryWrapper=new LambdaQueryWrapper<>();
+        System.out.println(BaseContext.GetCurrentId());
         queryWrapper.eq(Orders::getUserId,BaseContext.GetCurrentId());
         queryWrapper.orderByDesc(Orders::getCheckoutTime);
         this.page(pageInfo,queryWrapper);
@@ -168,7 +169,7 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Orders> implement
      * @param orders
      */
     @Override
-    @CacheEvict("orderCache")
+    @CacheEvict(value = "orderCache",allEntries = true)
     public void updateStatus(Orders orders) {
         this.updateById(orders);
     }

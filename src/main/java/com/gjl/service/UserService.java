@@ -12,5 +12,5 @@ public interface UserService extends IService<User> {
 
     public void sendMsg(User user, HttpSession session);
 
-    public R<User> login(Map map, HttpSession session);
+    public R<User> login(Map map, HttpServletRequest request);
 }

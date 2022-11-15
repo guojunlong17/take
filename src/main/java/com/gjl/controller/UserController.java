@@ -37,8 +37,8 @@ public class UserController {
      * @return
      */
     @PostMapping("/login")
-    public R<Object> login(@RequestBody Map map, HttpSession session){
-        return R.success(service.login(map,session));
+    public R<Object> login(@RequestBody Map map,HttpServletRequest request){
+        return R.success(service.login(map,request));
     }
 
     /**
